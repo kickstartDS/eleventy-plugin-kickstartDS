@@ -1,33 +1,54 @@
 {
-  "name": "@scope/plugin-name",
+  "name": "@kickstartds/eleventy-plugin",
   "version": "1.0.0",
   "description": "Description of plugin",
+  "keywords": [
+    "11ty",
+    "11ty-plugin",
+    "eleventy",
+    "eleventy-plugin",
+    "kickstartds"
+  ],
   "homepage": "",
-  "main": ".eleventy.js",
-  "scripts": {
-    "start": "eleventy --serve",
-    "build": "eleventy",
-    "bump": "npm --no-git-tag-version version"
+  "bugs": {
+    "url": "https://github.com/username/repo-name/issues"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/username/repo-name.git"
   },
-  "keywords": [
-    "11ty",
-    "11ty-plugin",
-    "eleventy",
-    "eleventy-plugin"
-  ],
+  "license": "ISC",
   "author": {
     "name": "username",
     "url": "https://website.com"
   },
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/username/repo-name/issues"
+  "main": ".eleventy.js",
+  "scripts": {
+    "format": "prettier -w .",
+    "build": "tsc && npx @11ty/eleventy",
+    "start": "tsc && npx @11ty/eleventy --serve",
+    "prepublishOnly": "tsc"
+  },
+  "dependencies": {
+    "browserslist": "^4.21.10",
+    "browserslist-to-esbuild": "^1.2.0",
+    "esbuild": "^0.19.2",
+    "esbuild-node-externals": "^1.8.0",
+    "esbuild-sass-plugin": "^2.13.0",
+    "lightningcss": "^1.21.7",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@11ty/eleventy": "^2.0.0",
+    "@kickstartds/base": "^2.2.0",
+    "@kickstartds/core": "^2.2.0",
+    "@types/node": "^20.5.7",
+    "@types/react-dom": "^18.2.7",
+    "prettier": "^3.0.2",
+    "typescript": "^5.2.2"
+  },
+  "peerDependencies": {
     "@11ty/eleventy": "^2.0.0"
   }
 }
