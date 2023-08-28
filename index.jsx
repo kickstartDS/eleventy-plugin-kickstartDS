@@ -1,5 +1,6 @@
 import { Section } from "@kickstartds/base/lib/section";
 import { TextMedia } from "@kickstartds/base/lib/text-media";
+import { Title } from "./_includes/Title";
 
 export const frontmatter = {
   title: "Plugin Test Page",
@@ -8,7 +9,7 @@ export const frontmatter = {
 
 export default (props) => (
   <>
-    <Section headline={{ level: "h1", content: props.title }}>
+    <Section headline={{ level: "h1", content: props.title }} mode="list">
       <TextMedia
         text={`
 Cupcake ipsum dolor. Sit amet I love I love I love. I love pudding dragée. Halvah macaroon halvah I love jujubes bonbon I love pie. Bonbon gingerbread bonbon I love. Tootsie roll chocolate sweet jelly-o lemon drops cotton candy gummies.
@@ -39,6 +40,7 @@ Chocolate bar pudding ice cream. Jelly-o tootsie roll pie gingerbread candy jell
 Gummies toffee I love danish I love macaroon sesame snaps cookie. Macaroon lollipop apple pie powder marzipan bonbon brownie sweet roll I love. Gummi bears ice cream pie oat cake cupcake wafer sesame snaps. Sweet brownie icing. Tart sweet sugar plum danish cupcake I love. Fruitcake tart sweet roll soufflé. Muffin ice cream I love I love sugar plum jujubes carrot cake wafer I love. Icing brownie cake I love sugar plum I love cake.
       `}
       />
+      <Title />
     </Section>
   </>
 );

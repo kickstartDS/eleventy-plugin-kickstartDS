@@ -27,7 +27,7 @@
     "format": "prettier -w .",
     "build": "tsc && npx @11ty/eleventy",
     "start": "tsc && npx @11ty/eleventy --serve",
-    "prepublishOnly": "tsc"
+    "prepublishOnly": "tsc && esbuild src/page.js --outdir=src --allow-overwrite --define:process.env.NODE_ENV=\\\"production\\\""
   },
   "dependencies": {
     "browserslist": "^4.21.10",

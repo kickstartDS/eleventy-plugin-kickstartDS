@@ -1,6 +1,6 @@
 import path from "path";
 import { FC } from "react";
-import esbuild, { BuildResult } from "esbuild";
+import esbuild, { BuildOptions, BuildResult } from "esbuild";
 import { sassPlugin } from "esbuild-sass-plugin";
 import { nodeExternalsPlugin } from "esbuild-node-externals";
 import lightningcss from "lightningcss";
@@ -8,12 +8,13 @@ import { lightningcssTargets } from "./browserTargets";
 import { findClientScripts } from "./clientScripts";
 
 export async function createPageContext(inputPath: string) {
-  return esbuild.context({
+  const options: BuildOptions = {
     stdin: {
       contents: `
           import * as Page from "${inputPath}";
+          import { FrontmatterContext } from "@kickstartds/eleventy-plugin/frontmatter";
           page = {
-            component: (data) => <Page.default {...data} />,
+            component: (data) => <FrontmatterContext.Provider value={data}><Page.default {...data} /></FrontmatterContext.Provider>,
             frontmatter: Page.frontmatter,
           };
         `,
@@ -41,17 +42,23 @@ export async function createPageContext(inputPath: string) {
     platform: "node",
     define: {
       "process.env.NODE_ENV": JSON.stringify("production"),
-    },
-  });
+    }
+  };
+  if (process.env.NODE_ENV !== "production") {
+    options.alias = {
+      "@kickstartds/eleventy-plugin": ".",
+    };
+  }
+  return esbuild.context(options);
 }
 
 export function bundlePage(
   result: BuildResult<{ write: false; metafile: true }>,
-  inputPath: string,
+  inputPath: string
 ) {
   const page: { component: FC<any>; frontmatter: any } = new Function(
     "require",
-    result.outputFiles[0].text + " return page;",
+    result.outputFiles[0].text + " return page;"
   )(require);
 
   const deps = Object.keys(result.metafile.inputs)
@@ -59,7 +66,7 @@ export function bundlePage(
       (dep) =>
         dep !== "<stdin>" &&
         dep !== inputPath.slice(2) &&
-        !dep.startsWith("node_modules/"),
+        !dep.startsWith("node_modules/")
     )
     .map((dep) => "./" + dep);
 
