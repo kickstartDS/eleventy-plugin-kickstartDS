@@ -12,7 +12,7 @@ export async function createPageContext(inputPath: string) {
     stdin: {
       contents: `
           import * as Page from "${inputPath}";
-          import { FrontmatterContext } from "@kickstartds/eleventy-plugin/frontmatter";
+          import { FrontmatterContext } from "@kickstartds/eleventy-plugin-kickstartds/frontmatter";
           page = {
             component: (data) => <FrontmatterContext.Provider value={data}><Page.default {...data} /></FrontmatterContext.Provider>,
             frontmatter: Page.frontmatter,
@@ -46,7 +46,7 @@ export async function createPageContext(inputPath: string) {
   };
   if (process.env.NODE_ENV !== "production") {
     options.alias = {
-      "@kickstartds/eleventy-plugin": ".",
+      "@kickstartds/eleventy-plugin-kickstartds": ".",
     };
   }
   return esbuild.context(options);

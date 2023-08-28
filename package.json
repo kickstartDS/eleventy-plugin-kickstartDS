@@ -1,6 +1,6 @@
 {
-  "name": "@kickstartds/eleventy-plugin",
-  "version": "1.0.0",
+  "name": "@kickstartds/eleventy-plugin-kickstartds",
+  "version": "0.0.0",
   "description": "Description of plugin",
   "keywords": [
     "11ty",
