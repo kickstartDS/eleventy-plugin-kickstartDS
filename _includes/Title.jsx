@@ -1,10 +1,10 @@
-import { useFrontmatter } from "../frontmatter";
+import { useEleventy } from "../useEleventy";
 
 export const Title = () => {
-  const frontmatter = useFrontmatter();
+  const data = useEleventy();
   return (
     <p>
-      The title of the page is <b>{frontmatter.title}</b>
+      The title of the page is <b>{data.title}</b>
     </p>
   );
 };

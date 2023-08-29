@@ -2,7 +2,7 @@ import { Section } from "@kickstartds/base/lib/section";
 import { TextMedia } from "@kickstartds/base/lib/text-media";
 import { Title } from "./_includes/Title";
 
-export const frontmatter = {
+export const data = {
   title: "Plugin Test Page",
   layout: "base.njk",
 };

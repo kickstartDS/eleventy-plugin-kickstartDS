@@ -12,10 +12,10 @@ export async function createPageContext(inputPath: string) {
     stdin: {
       contents: `
           import * as Page from "${inputPath}";
-          import { FrontmatterContext } from "@kickstartds/eleventy-plugin-kickstartds/frontmatter";
+          import { EleventyContext } from "@kickstartds/eleventy-plugin-kickstartds/useEleventy";
           page = {
-            component: (data) => <FrontmatterContext.Provider value={data}><Page.default {...data} /></FrontmatterContext.Provider>,
-            frontmatter: Page.frontmatter,
+            component: (data) => <EleventyContext.Provider value={data}><Page.default {...data} /></EleventyContext.Provider>,
+            data: Page.data,
           };
         `,
       resolveDir: process.cwd(),
@@ -56,7 +56,7 @@ export function bundlePage(
   result: BuildResult<{ write: false; metafile: true }>,
   inputPath: string
 ) {
-  const page: { component: FC<any>; frontmatter: any } = new Function(
+  const page: { component: FC<any>; data: any } = new Function(
     "require",
     result.outputFiles[0].text + " return page;"
   )(require);
@@ -85,7 +85,7 @@ export function bundlePage(
 
   return {
     component: page.component,
-    data: page.frontmatter,
+    data: page.data,
     css,
     clientScripts,
     deps,

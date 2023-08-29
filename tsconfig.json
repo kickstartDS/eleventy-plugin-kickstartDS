@@ -8,6 +8,6 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["**/*.ts"],
+  "include": [".eleventy.ts", "**/*.ts"],
   "exclude": ["node_modules"]
 }
