@@ -2,12 +2,34 @@ import { UserConfig } from "@11ty/eleventy";
 import { renderToStaticMarkup } from "react-dom/server";
 import { FC, ReactElement } from "react";
 import { BuildContext } from "esbuild";
-import { bundleClientScripts } from "./src/clientScripts";
 import { createPageContext, bundlePage } from "./src/page";
+import { inject } from "./src/inject";
+
+type EleventyAfterEvent = {
+  dir: {
+    input: string;
+    output: string;
+    includes: string;
+    data: string;
+    layouts?: string;
+  };
+  outputMode: "fs" | "json" | "ndjson";
+  runMode: "serve" | "watch" | "build";
+  results: {
+    inputPath: string;
+    outputPath: string;
+    url: string;
+    content: string;
+  }[];
+};
+
+export type Options = {
+  ignore?: string[];
+};
 
 module.exports = function kdsPlugin(
   eleventyConfig: UserConfig,
-  options: { ignore?: string[] } = {},
+  options: Options = {},
 ) {
   const { ignore = [] } = options;
   const shouldIgnore = (inputPath: string) => {
@@ -26,16 +48,21 @@ module.exports = function kdsPlugin(
     string,
     {
       component: FC<any>;
-      css: Uint8Array;
-      clientScripts: string[];
       deps: string[];
+      clientAssets: Set<string>;
     }
   >();
   const pageContexts = new Map<string, BuildContext>();
 
   eleventyConfig.on(
     "eleventy.after",
-    ({ runMode }: { runMode: "serve" | "watch" | "build" }) => {
+    ({ results, runMode }: EleventyAfterEvent) => {
+      for (const { inputPath, content, outputPath } of results) {
+        const page = pageMap.get(inputPath);
+        if (page) {
+          inject(content, inputPath, outputPath, page.clientAssets);
+        }
+      }
       if (runMode === "build") {
         for (const [, ctx] of pageContexts) {
           ctx.dispose();
@@ -78,17 +105,11 @@ module.exports = function kdsPlugin(
       if (!page) {
         throw `could not find page for ${inputPath}`;
       }
-      const { component, clientScripts, css, deps } = page;
+      const { component, deps } = page;
       this.addDependencies(inputPath, deps);
 
-      return async (data: any) => {
-        const html = renderToStaticMarkup(component(data) as ReactElement);
-        const js = await bundleClientScripts(clientScripts);
-
-        return `${
-          css ? `<style>${css}</style>` : ""
-        } ${html} <script type="module">${js}</script>`;
-      };
+      return (data: any) =>
+        renderToStaticMarkup(component(data) as ReactElement);
     },
   });
 };

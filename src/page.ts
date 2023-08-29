@@ -1,11 +1,8 @@
-import path from "path";
 import { FC } from "react";
 import esbuild, { BuildOptions, BuildResult } from "esbuild";
 import { sassPlugin } from "esbuild-sass-plugin";
 import { nodeExternalsPlugin } from "esbuild-node-externals";
-import lightningcss from "lightningcss";
-import { lightningcssTargets } from "./browserTargets";
-import { findClientScripts } from "./clientScripts";
+import { findClientAssets } from "./clientAssets";
 
 export async function createPageContext(inputPath: string) {
   const options: BuildOptions = {
@@ -42,7 +39,7 @@ export async function createPageContext(inputPath: string) {
     platform: "node",
     define: {
       "process.env.NODE_ENV": JSON.stringify("production"),
-    }
+    },
   };
   if (process.env.NODE_ENV !== "production") {
     options.alias = {
@@ -54,11 +51,11 @@ export async function createPageContext(inputPath: string) {
 
 export function bundlePage(
   result: BuildResult<{ write: false; metafile: true }>,
-  inputPath: string
+  inputPath: string,
 ) {
   const page: { component: FC<any>; data: any } = new Function(
     "require",
-    result.outputFiles[0].text + " return page;"
+    result.outputFiles[0].text + " return page;",
   )(require);
 
   const deps = Object.keys(result.metafile.inputs)
@@ -66,28 +63,18 @@ export function bundlePage(
       (dep) =>
         dep !== "<stdin>" &&
         dep !== inputPath.slice(2) &&
-        !dep.startsWith("node_modules/")
+        !dep.startsWith("node_modules/"),
     )
     .map((dep) => "./" + dep);
 
-  /** @type {string[]} */
-  const clientScripts: string[] = [];
-  findClientScripts(inputPath.slice(2), clientScripts, result.metafile.inputs);
-
-  const cssFileName =
-    path.basename(inputPath, path.extname(inputPath)) + ".css";
-  const { code: css } = lightningcss.transform({
-    code: Buffer.from(result.outputFiles[1]?.text || ""),
-    minify: true,
-    targets: lightningcssTargets,
-    filename: path.join(path.dirname(inputPath), cssFileName),
-  });
-
+  const clientAssets = findClientAssets(
+    inputPath.slice(2),
+    result.metafile.inputs,
+  );
   return {
     component: page.component,
     data: page.data,
-    css,
-    clientScripts,
+    clientAssets,
     deps,
   };
 }
