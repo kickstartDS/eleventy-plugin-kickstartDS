@@ -1,3 +1,4 @@
+import path from "path";
 import { FC } from "react";
 import esbuild, { BuildOptions, BuildResult } from "esbuild";
 import { sassPlugin } from "esbuild-sass-plugin";
@@ -71,10 +72,28 @@ export function bundlePage(
     inputPath.slice(2),
     result.metafile.inputs,
   );
+  const { clientJs, clientCss } = [...clientAssets].reduce(
+    (prev, curr) => {
+      switch (path.extname(curr)) {
+        case ".js":
+          prev.clientJs.push(curr);
+          break;
+        case ".css":
+          prev.clientCss.push(curr);
+          break;
+      }
+      return prev;
+    },
+    {
+      clientJs: [],
+      clientCss: [],
+    } as { clientJs: string[]; clientCss: string[] },
+  );
   return {
     component: page.component,
     data: page.data,
-    clientAssets,
+    clientJs,
+    clientCss,
     deps,
   };
 }

@@ -3,7 +3,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { FC, ReactElement } from "react";
 import { BuildContext } from "esbuild";
 import { createPageContext, bundlePage } from "./src/page";
-import { inject } from "./src/inject";
+import { bundleClientJs, bundleClientCss } from "./src/clientAssets";
+import { injectInline } from "./src/injectInline";
+import { injectBundle } from "./src/injectBundle";
 
 type EleventyAfterEvent = {
   dir: {
@@ -25,13 +27,14 @@ type EleventyAfterEvent = {
 
 export type Options = {
   ignore?: string[];
+  inline?: boolean;
 };
 
 module.exports = function kdsPlugin(
   eleventyConfig: UserConfig,
   options: Options = {},
 ) {
-  const { ignore = [] } = options;
+  const { ignore = [], inline = false } = options;
   const shouldIgnore = (inputPath: string) => {
     for (const ignorePath of ignore) {
       if (inputPath.startsWith(ignorePath)) {
@@ -49,20 +52,43 @@ module.exports = function kdsPlugin(
     {
       component: FC<any>;
       deps: string[];
-      clientAssets: Set<string>;
+      clientJs: string[];
+      clientCss: string[];
     }
   >();
   const pageContexts = new Map<string, BuildContext>();
 
   eleventyConfig.on(
     "eleventy.after",
-    ({ results, runMode }: EleventyAfterEvent) => {
-      for (const { inputPath, content, outputPath } of results) {
-        const page = pageMap.get(inputPath);
-        if (page) {
-          inject(content, inputPath, outputPath, page.clientAssets);
+    async ({ results, runMode, dir }: EleventyAfterEvent) => {
+      if (inline) {
+        for (const { inputPath, content, outputPath } of results) {
+          const page = pageMap.get(inputPath);
+          if (page) {
+            injectInline(content, inputPath, outputPath, page);
+          }
+        }
+      } else {
+        let clientCssImports = new Set<string>();
+        const clientJsImports: [string, string[]][] = [];
+
+        for (const [inputPath, { clientJs, clientCss }] of pageMap) {
+          clientJsImports.push([inputPath, clientJs]);
+          clientCssImports = new Set([...clientCssImports, ...clientCss]);
+        }
+
+        const [jsPaths, cssPath] = await Promise.all([
+          bundleClientJs(clientJsImports, dir.output),
+          bundleClientCss([...clientCssImports], dir.output),
+        ]);
+
+        for (const { inputPath, content, outputPath } of results) {
+          if (pageMap.has(inputPath)) {
+            injectBundle(content, outputPath, jsPaths[inputPath], cssPath);
+          }
         }
       }
+
       if (runMode === "build") {
         for (const [, ctx] of pageContexts) {
           ctx.dispose();
