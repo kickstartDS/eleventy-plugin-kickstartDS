@@ -2,8 +2,11 @@ import { FC } from "react";
 import esbuild, { BuildOptions, BuildResult } from "esbuild";
 import { findClientAssets } from "./clientAssets";
 
-export async function createPageContext(inputPath: string) {
-  const options: BuildOptions = {
+export async function createPageContext(
+  inputPath: string,
+  templateBuildOptions: (options: BuildOptions) => BuildOptions,
+) {
+  const options = templateBuildOptions({
     stdin: {
       contents: `
           import * as Page from "${inputPath}";
@@ -28,7 +31,7 @@ export async function createPageContext(inputPath: string) {
     define: {
       "process.env.NODE_ENV": JSON.stringify("production"),
     },
-  };
+  });
   if (process.env.NODE_ENV !== "production") {
     options.alias = {
       "@kickstartds/eleventy-plugin-kickstartds": ".",
