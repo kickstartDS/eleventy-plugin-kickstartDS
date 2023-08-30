@@ -1,7 +1,5 @@
 import { FC } from "react";
 import esbuild, { BuildOptions, BuildResult } from "esbuild";
-import { sassPlugin } from "esbuild-sass-plugin";
-import { nodeExternalsPlugin } from "esbuild-node-externals";
 import { findClientAssets } from "./clientAssets";
 
 export async function createPageContext(inputPath: string) {
@@ -24,17 +22,7 @@ export async function createPageContext(inputPath: string) {
     outdir: ".",
     treeShaking: true,
     loader: { ".svg": "dataurl" },
-    plugins: [
-      sassPlugin(),
-      nodeExternalsPlugin({
-        allowList: [
-          "@kickstartds/core",
-          "@kickstartds/base",
-          "@kickstartds/content",
-          "@kickstartds/form",
-        ],
-      }),
-    ],
+    external: ["react", "react-dom"],
     metafile: true,
     platform: "node",
     define: {
