@@ -17,6 +17,7 @@ async function bundleClientAssets(clientAssets: string[], inputPath: string) {
     outdir: ".",
     minify: true,
     treeShaking: true,
+    loader: { ".svg": "dataurl", ".woff2": "dataurl", ".woff": "dataurl" },
     platform: "browser",
     target: esbuildTargets,
     define: {

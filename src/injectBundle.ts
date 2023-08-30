@@ -4,7 +4,7 @@ export async function injectBundle(
   content: string,
   outputPath: string,
   jsPath: { permalink: string; imports: string[] } | undefined,
-  cssPath?: string,
+  cssPath: string | undefined,
 ) {
   let newContent = content;
 

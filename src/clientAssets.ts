@@ -89,12 +89,12 @@ export async function bundleClientJs(
   );
   const result = await esbuild.build({
     entryPoints: Object.keys(entryPoints),
+    entryNames: "[dir]/[name]-[hash]",
     bundle: true,
     outdir: outdir + "/_",
     minify: true,
     treeShaking: true,
     splitting: true,
-    loader: { ".svg": "dataurl", ".woff2": "dataurl", ".woff": "dataurl" },
     platform: "browser",
     format: "esm",
     metafile: true,
@@ -123,21 +123,23 @@ export async function bundleClientJs(
 }
 
 export async function bundleClientCss(imports: string[], outdir: string) {
-  const filename = "/_/index.css";
   const result = await esbuild.build({
     stdin: {
       contents: imports.map((i) => `@import "${i}";`).join(""),
       resolveDir: process.cwd(),
+      sourcefile: "index.css",
       loader: "css",
     },
+    outdir: "/_",
+    entryNames: "[dir]/index-[hash]",
+    loader: { ".svg": "dataurl", ".woff2": "dataurl", ".woff": "dataurl" },
     write: false,
     bundle: true,
-    platform: "browser",
-    target: esbuildTargets,
   });
-  const css = minifyCss(result.outputFiles[0].contents, filename);
+  const [outputFile] = result.outputFiles;
+  const css = minifyCss(outputFile.contents, outputFile.path);
   if (css) {
-    fs.writeFileSync(outdir + filename, css);
-    return filename;
+    fs.writeFileSync(path.join(outdir, outputFile.path), css);
+    return outputFile.path;
   }
 }
