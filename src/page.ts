@@ -1,12 +1,13 @@
 import path from "path";
 import { FC } from "react";
 import esbuild, { BuildOptions, BuildResult } from "esbuild";
-import { sassPlugin } from "esbuild-sass-plugin";
-import { nodeExternalsPlugin } from "esbuild-node-externals";
 import { findClientAssets } from "./clientAssets";
 
-export async function createPageContext(inputPath: string) {
-  const options: BuildOptions = {
+export async function createPageContext(
+  inputPath: string,
+  templateBuildOptions: (options: BuildOptions) => BuildOptions,
+) {
+  const options = templateBuildOptions({
     stdin: {
       contents: `
           import * as Page from "${inputPath}";
@@ -24,24 +25,14 @@ export async function createPageContext(inputPath: string) {
     bundle: true,
     outdir: ".",
     treeShaking: true,
-    loader: { ".svg": "dataurl" },
-    plugins: [
-      sassPlugin(),
-      nodeExternalsPlugin({
-        allowList: [
-          "@kickstartds/core",
-          "@kickstartds/base",
-          "@kickstartds/content",
-          "@kickstartds/form",
-        ],
-      }),
-    ],
+    loader: { ".css": "empty" },
+    external: ["react", "react-dom"],
     metafile: true,
     platform: "node",
     define: {
       "process.env.NODE_ENV": JSON.stringify("production"),
     },
-  };
+  });
   if (process.env.NODE_ENV !== "production") {
     options.alias = {
       "@kickstartds/eleventy-plugin-kickstartds": ".",

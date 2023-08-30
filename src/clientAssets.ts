@@ -94,6 +94,7 @@ export async function bundleClientJs(
     minify: true,
     treeShaking: true,
     splitting: true,
+    loader: { ".svg": "dataurl", ".woff2": "dataurl", ".woff": "dataurl" },
     platform: "browser",
     format: "esm",
     metafile: true,

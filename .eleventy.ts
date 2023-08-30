@@ -1,7 +1,7 @@
 import { UserConfig } from "@11ty/eleventy";
 import { renderToStaticMarkup } from "react-dom/server";
 import { FC, ReactElement } from "react";
-import { BuildContext } from "esbuild";
+import { BuildContext, BuildOptions } from "esbuild";
 import { createPageContext, bundlePage } from "./src/page";
 import { bundleClientJs, bundleClientCss } from "./src/clientAssets";
 import { injectInline } from "./src/injectInline";
@@ -28,13 +28,18 @@ type EleventyAfterEvent = {
 export type Options = {
   ignore?: string[];
   inline?: boolean;
+  templateBuildOptions?: (options: BuildOptions) => BuildOptions;
 };
 
 module.exports = function kdsPlugin(
   eleventyConfig: UserConfig,
   options: Options = {},
 ) {
-  const { ignore = [], inline = false } = options;
+  const {
+    ignore = [],
+    inline = false,
+    templateBuildOptions = (o) => o,
+  } = options;
   const shouldIgnore = (inputPath: string) => {
     for (const ignorePath of ignore) {
       if (inputPath.startsWith(ignorePath)) {
@@ -112,7 +117,10 @@ module.exports = function kdsPlugin(
       }
 
       if (!pageContexts.has(inputPath)) {
-        pageContexts.set(inputPath, await createPageContext(inputPath));
+        pageContexts.set(
+          inputPath,
+          await createPageContext(inputPath, templateBuildOptions),
+        );
       }
       const ctx = pageContexts.get(inputPath);
       if (!ctx) {
