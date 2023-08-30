@@ -68,6 +68,7 @@ export async function bundleClientAssets(
     outdir: ".",
     minify: true,
     treeShaking: true,
+    loader: { ".svg": "dataurl", ".woff2": "dataurl", ".woff": "dataurl" },
     platform: "browser",
     target: esbuildTargets,
     define: {

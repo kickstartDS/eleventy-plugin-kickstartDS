@@ -24,7 +24,7 @@ export async function createPageContext(
     bundle: true,
     outdir: ".",
     treeShaking: true,
-    loader: { ".svg": "dataurl" },
+    loader: { ".css": "empty" },
     external: ["react", "react-dom"],
     metafile: true,
     platform: "node",
