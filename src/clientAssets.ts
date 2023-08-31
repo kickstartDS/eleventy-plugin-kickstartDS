@@ -1,5 +1,6 @@
+import fs from "fs";
 import path from "path";
-import esbuild, { Metafile } from "esbuild";
+import esbuild, { Metafile, Plugin } from "esbuild";
 import lightningcss from "lightningcss";
 import { esbuildTargets, lightningcssTargets } from "./browserTargets";
 
@@ -17,7 +18,7 @@ const kds_exports = ["core", "base", "blog", "form", "content"].reduce(
   [] as string[],
 );
 
-function minifyCss(code: Uint8Array | undefined, inputPath: string) {
+export function minifyCss(code: Uint8Array | undefined, inputPath: string) {
   if (code) {
     const cssFileName =
       path.basename(inputPath, path.extname(inputPath)) + ".css";
@@ -51,33 +52,103 @@ export function findClientAssets(
   return clientAssets;
 }
 
-export async function bundleClientAssets(
-  clientAssets: Set<string>,
-  inputPath: string,
-) {
-  const clientResult = await esbuild.build({
-    stdin: {
-      contents: [...clientAssets]
-        .map((scriptPath) => `import "./${scriptPath}";`)
-        .join(""),
-      resolveDir: process.cwd(),
-      loader: "js",
+function virtual(options: Record<string, string | Uint8Array> = {}): Plugin {
+  const namespace = "virtual";
+  const filter = new RegExp(
+    Object.keys(options)
+      .map((name) => `^${name}$`)
+      .join("|"),
+  );
+  return {
+    name: namespace,
+    setup(build) {
+      build.onResolve({ filter }, (args) => {
+        return { path: args.path, namespace };
+      });
+      build.onLoad({ filter: /.*/, namespace }, (args) => {
+        return {
+          contents: options[args.path],
+          loader: "js",
+          resolveDir: process.cwd(),
+        };
+      });
     },
-    write: false,
+  };
+}
+
+export async function bundleClientJs(
+  entries: [string, string[]][],
+  outdir: string,
+) {
+  const outdirRe = new RegExp(`^${outdir}\/`);
+  const entryPoints = Object.fromEntries(
+    entries.map(([name, imports]) => [
+      name,
+      imports.map((scriptPath) => `import "./${scriptPath}";`).join(""),
+    ]),
+  );
+  const result = await esbuild.build({
+    entryPoints: Object.keys(entryPoints),
+    entryNames: "[dir]/[name]-[hash]",
     bundle: true,
-    outdir: ".",
+    outdir: outdir + "/_",
     minify: true,
     treeShaking: true,
-    loader: { ".svg": "dataurl", ".woff2": "dataurl", ".woff": "dataurl" },
+    splitting: true,
+    loader: { ".css": "empty" },
     platform: "browser",
+    format: "esm",
+    metafile: true,
     target: esbuildTargets,
     define: {
       "process.env.NODE_ENV": JSON.stringify("production"),
     },
+    plugins: [virtual(entryPoints)],
   });
 
-  return {
-    js: clientResult.outputFiles[0]?.contents,
-    css: minifyCss(clientResult.outputFiles[1]?.contents, inputPath),
-  };
+  const entryImports: Record<string, { permalink: string; imports: string[] }> =
+    Object.fromEntries(
+      Object.entries(result.metafile.outputs)
+        .filter(([, { entryPoint }]) => entryPoint?.startsWith("virtual:"))
+        .map(([name, { entryPoint, imports }]) => [
+          entryPoint?.replace("virtual:", ""),
+          {
+            permalink: name.replace(outdirRe, "/"),
+            imports: imports
+              .filter(({ kind }) => kind === "import-statement")
+              .map(({ path }) => path.replace(outdirRe, "/")),
+          },
+        ]),
+    );
+  const cssInputs = Object.keys(result.metafile.inputs).filter((i) =>
+    i.endsWith(".css"),
+  );
+  return [entryImports, cssInputs] as const;
+}
+
+export async function bundleClientCss(imports: string[], outdir: string) {
+  const result = await esbuild.build({
+    stdin: {
+      contents: imports.map((i) => `@import "${i}";`).join(""),
+      resolveDir: process.cwd(),
+      sourcefile: "index.css",
+      loader: "css",
+    },
+    outdir: "/_",
+    entryNames: "[dir]/index-[hash]",
+    loader: { ".svg": "dataurl", ".woff2": "dataurl", ".woff": "dataurl" },
+    write: false,
+    bundle: true,
+  });
+  const [outputFile] = result.outputFiles;
+  const css = minifyCss(outputFile.contents, outputFile.path);
+  if (css) {
+    const cssFileName = path.join(outdir, outputFile.path);
+    const cssFileDir = path.dirname(cssFileName);
+    if (!fs.existsSync(cssFileDir)) {
+      fs.mkdirSync(cssFileDir);
+    }
+    fs.writeFileSync(cssFileName, css);
+    return outputFile.path;
+  }
 }
