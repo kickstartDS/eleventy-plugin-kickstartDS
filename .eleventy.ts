@@ -75,18 +75,20 @@ module.exports = function kdsPlugin(
         }
       } else {
         const clientJsImports: [string, string[]][] = [];
-        const [jsPaths, clientCssImports] = await bundleClientJs(
+        const pageClientCssImports: string[] = [];
+
+        for (const [inputPath, { clientJs, clientCss }] of pageMap) {
+          clientJsImports.push([inputPath, clientJs]);
+          pageClientCssImports.push(...clientCss);
+        }
+
+        const [jsPaths, jsClientCssImports] = await bundleClientJs(
           clientJsImports,
           dir.output,
         );
 
-        for (const [inputPath, { clientJs, clientCss }] of pageMap) {
-          clientJsImports.push([inputPath, clientJs]);
-          clientCssImports.push(...clientCss);
-        }
-
         const cssPath = await bundleClientCss(
-          [...new Set(clientCssImports)],
+          [...new Set([...jsClientCssImports, ...pageClientCssImports])],
           dir.output,
         );
 
