@@ -95,6 +95,7 @@ export async function bundleClientJs(
     minify: true,
     treeShaking: true,
     splitting: true,
+    loader: { ".css": "empty" },
     platform: "browser",
     format: "esm",
     metafile: true,
@@ -119,7 +120,10 @@ export async function bundleClientJs(
           },
         ]),
     );
-  return entryImports;
+  const cssInputs = Object.keys(result.metafile.inputs).filter((i) =>
+    i.endsWith(".css"),
+  );
+  return [entryImports, cssInputs] as const;
 }
 
 export async function bundleClientCss(imports: string[], outdir: string) {
@@ -139,7 +143,12 @@ export async function bundleClientCss(imports: string[], outdir: string) {
   const [outputFile] = result.outputFiles;
   const css = minifyCss(outputFile.contents, outputFile.path);
   if (css) {
-    fs.writeFileSync(path.join(outdir, outputFile.path), css);
+    const cssFileName = path.join(outdir, outputFile.path);
+    const cssFileDir = path.dirname(cssFileName);
+    if (!fs.existsSync(cssFileDir)) {
+      fs.mkdirSync(cssFileDir);
+    }
+    fs.writeFileSync(cssFileName, css);
     return outputFile.path;
   }
 }
