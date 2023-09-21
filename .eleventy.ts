@@ -26,7 +26,6 @@ type EleventyAfterEvent = {
 };
 
 export type Options = {
-  ignore?: string[];
   inline?: boolean;
   templateBuildOptions?: (options: BuildOptions) => BuildOptions;
 };
@@ -35,19 +34,7 @@ module.exports = function kdsPlugin(
   eleventyConfig: UserConfig,
   options: Options = {},
 ) {
-  const {
-    ignore = [],
-    inline = false,
-    templateBuildOptions = (o) => o,
-  } = options;
-  const shouldIgnore = (inputPath: string) => {
-    for (const ignorePath of ignore) {
-      if (inputPath.startsWith(ignorePath)) {
-        return true;
-      }
-    }
-    return false;
-  };
+  const { inline = false, templateBuildOptions = (o) => o } = options;
 
   eleventyConfig.addTemplateFormats("jsx");
   eleventyConfig.addTemplateFormats("tsx");
@@ -94,7 +81,12 @@ module.exports = function kdsPlugin(
 
         for (const { inputPath, content, outputPath } of results) {
           if (pageMap.has(inputPath)) {
-            await injectBundle(content, outputPath, jsPaths[inputPath], cssPath);
+            await injectBundle(
+              content,
+              outputPath,
+              jsPaths[inputPath],
+              cssPath,
+            );
           }
         }
       }
@@ -117,10 +109,6 @@ module.exports = function kdsPlugin(
     },
 
     async getInstanceFromInputPath(inputPath: string) {
-      if (shouldIgnore(inputPath)) {
-        return { data: { eleventyExcludeFromCollections: true } };
-      }
-
       if (!pageContexts.has(inputPath)) {
         pageContexts.set(
           inputPath,
@@ -138,8 +126,6 @@ module.exports = function kdsPlugin(
     },
 
     async compile(content: string, inputPath: string) {
-      if (shouldIgnore(inputPath)) return;
-
       const page = pageMap.get(inputPath);
       if (!page) {
         throw `could not find page for ${inputPath}`;
