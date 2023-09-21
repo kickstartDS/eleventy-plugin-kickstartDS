@@ -70,7 +70,7 @@ module.exports = function kdsPlugin(
         for (const { inputPath, content, outputPath } of results) {
           const page = pageMap.get(inputPath);
           if (page) {
-            injectInline(content, inputPath, outputPath, page);
+            await injectInline(content, inputPath, outputPath, page);
           }
         }
       } else {
@@ -94,7 +94,7 @@ module.exports = function kdsPlugin(
 
         for (const { inputPath, content, outputPath } of results) {
           if (pageMap.has(inputPath)) {
-            injectBundle(content, outputPath, jsPaths[inputPath], cssPath);
+            await injectBundle(content, outputPath, jsPaths[inputPath], cssPath);
           }
         }
       }
