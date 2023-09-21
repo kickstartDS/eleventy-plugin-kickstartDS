@@ -10,11 +10,11 @@ export async function createPageContext(
   const options = templateBuildOptions({
     stdin: {
       contents: `
-          import * as Page from "${inputPath}";
-          import { EleventyContext } from "@kickstartds/eleventy-plugin-kickstartds/useEleventy";
+          const Page = require("${inputPath}");
+          const { EleventyContext } = require("@kickstartds/eleventy-plugin-kickstartds/useEleventy");
           page = {
             component: (data) => <EleventyContext.Provider value={data}><Page.default {...data} /></EleventyContext.Provider>,
-            data: Page.data,
+            data: Page.data || {},
           };
         `,
       resolveDir: process.cwd(),
