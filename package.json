@@ -30,22 +30,23 @@
     "prepublishOnly": "tsc && esbuild src/page.js --outdir=src --allow-overwrite --define:process.env.NODE_ENV=\\\"production\\\""
   },
   "dependencies": {
-    "browserslist": "^4.21.10",
+    "browserslist": "^4.22.2",
     "browserslist-to-esbuild": "^1.2.0",
-    "esbuild": "^0.19.2",
-    "lightningcss": "^1.21.7",
+    "esbuild": "^0.19.0",
+    "esbuild-sass-plugin": "^2.16.1",
+    "lightningcss": "^1.22.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@11ty/eleventy": "^2.0.0",
-    "@kickstartds/base": "^2.2.0",
-    "@kickstartds/core": "^2.2.0",
-    "@types/node": "^20.5.7",
-    "@types/react-dom": "^18.2.7",
-    "prettier": "^3.0.2",
-    "release-it": "^16.1.5",
-    "typescript": "^5.2.2"
+    "@11ty/eleventy": "^2.0.1",
+    "@kickstartds/base": "^2.2.2",
+    "@kickstartds/core": "^2.2.1",
+    "@types/node": "^20.11.0",
+    "@types/react-dom": "^18.2.18",
+    "prettier": "^3.1.1",
+    "release-it": "^17.0.1",
+    "typescript": "^5.3.3"
   },
   "peerDependencies": {
     "@11ty/eleventy": "^2.0.0"

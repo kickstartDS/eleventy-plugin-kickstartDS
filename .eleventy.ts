@@ -2,6 +2,7 @@ import { UserConfig } from "@11ty/eleventy";
 import { renderToStaticMarkup } from "react-dom/server";
 import { FC, ReactElement } from "react";
 import { BuildContext, BuildOptions, BuildFailure } from "esbuild";
+import { SassPluginOptions } from "esbuild-sass-plugin";
 import { createPageContext, bundlePage } from "./src/page";
 import { bundleClientJs, bundleClientCss } from "./src/clientAssets";
 import { injectInline } from "./src/injectInline";
@@ -34,13 +35,18 @@ const isEsbuildError = (error: any): error is BuildFailure =>
 export type Options = {
   inline?: boolean;
   templateBuildOptions?: (options: BuildOptions) => BuildOptions;
+  sassPluginOptions?: SassPluginOptions;
 };
 
 module.exports = function kdsPlugin(
   eleventyConfig: UserConfig,
   options: Options = {},
 ) {
-  const { inline = false, templateBuildOptions = (o) => o } = options;
+  const {
+    inline = false,
+    templateBuildOptions = (o) => o,
+    sassPluginOptions,
+  } = options;
   let runMode: "serve" | "watch" | "build";
 
   eleventyConfig.addTemplateFormats("jsx");

@@ -1,5 +1,6 @@
 import fs from "fs";
 import esbuild from "esbuild";
+import { sassPlugin } from "esbuild-sass-plugin";
 import { esbuildTargets } from "./browserTargets";
 import { minifyCss } from "./clientAssets";
 
@@ -20,6 +21,7 @@ async function bundleClientAssets(clientAssets: string[], inputPath: string) {
     loader: { ".svg": "dataurl", ".woff2": "dataurl", ".woff": "dataurl" },
     platform: "browser",
     target: esbuildTargets,
+    plugins: [sassPlugin()],
     define: {
       "process.env.NODE_ENV": JSON.stringify("production"),
     },

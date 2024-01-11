@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import esbuild, { Metafile, Plugin } from "esbuild";
+import { sassPlugin, SassPluginOptions } from "esbuild-sass-plugin";
 import lightningcss from "lightningcss";
 import { esbuildTargets, lightningcssTargets } from "./browserTargets";
 
@@ -41,7 +42,8 @@ export function findClientAssets(
       if (
         (i.path.endsWith(".js") &&
           (i.path.endsWith(".client.js") || kds_exports.includes(i.path))) ||
-        i.path.endsWith(".css")
+        i.path.endsWith(".css") ||
+        i.path.endsWith(".scss")
       ) {
         clientAssets.add(i.path);
       } else {
@@ -95,7 +97,7 @@ export async function bundleClientJs(
     minify: true,
     treeShaking: true,
     splitting: true,
-    loader: { ".css": "empty" },
+    loader: { ".css": "empty", ".scss": "empty" },
     platform: "browser",
     format: "esm",
     metafile: true,
@@ -126,7 +128,11 @@ export async function bundleClientJs(
   return [entryImports, cssInputs] as const;
 }
 
-export async function bundleClientCss(imports: string[], outdir: string) {
+export async function bundleClientCss(
+  imports: string[],
+  outdir: string,
+  sassPluginOptions?: SassPluginOptions
+) {
   const result = await esbuild.build({
     stdin: {
       contents: imports.map((i) => `@import "${i}";`).join(""),
@@ -137,6 +143,7 @@ export async function bundleClientCss(imports: string[], outdir: string) {
     outdir: "/_",
     entryNames: "[dir]/index-[hash]",
     loader: { ".svg": "dataurl", ".woff2": "dataurl", ".woff": "dataurl" },
+    plugins: [sassPlugin(sassPluginOptions)],
     write: false,
     bundle: true,
   });

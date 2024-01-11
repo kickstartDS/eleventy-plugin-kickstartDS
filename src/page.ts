@@ -25,7 +25,7 @@ export async function createPageContext(
     bundle: true,
     outdir: ".",
     treeShaking: true,
-    loader: { ".css": "empty" },
+    loader: { ".css": "empty", ".scss": "empty" },
     external: ["react", "react-dom"],
     metafile: true,
     platform: "node",
@@ -70,6 +70,7 @@ export function bundlePage(
           prev.clientJs.push(curr);
           break;
         case ".css":
+        case ".scss":
           prev.clientCss.push(curr);
           break;
       }
