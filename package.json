@@ -17,10 +17,10 @@
     "type": "git",
     "url": "git+https://github.com/username/repo-name.git"
   },
-  "license": "ISC",
+  "license": "(MIT OR Apache-2.0)",
   "author": {
-    "name": "username",
-    "url": "https://website.com"
+    "name": "Jonas Ulrich",
+    "email": "jonas.ulrich@kickstartds.com"
   },
   "main": ".eleventy.js",
   "scripts": {
