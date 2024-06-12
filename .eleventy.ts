@@ -48,9 +48,18 @@ module.exports = function kdsPlugin(
     sassPluginOptions,
   } = options;
   let runMode: "serve" | "watch" | "build";
-
-  eleventyConfig.addTemplateFormats("jsx");
-  eleventyConfig.addTemplateFormats("tsx");
+  let assetsCache:
+    | Promise<{
+        jsPaths: Record<
+          string,
+          {
+            permalink: string;
+            imports: string[];
+          }
+        >;
+        cssPath: string | undefined;
+      }>
+    | undefined;
 
   const pageMap = new Map<
     string,
@@ -63,62 +72,52 @@ module.exports = function kdsPlugin(
     | RenderError[]
   >();
   const pageContexts = new Map<string, BuildContext>();
+  const inputPathByOutputPath: Record<string, string> = {};
+  const getSiteAssets = () => {
+    if (assetsCache) {
+      return assetsCache;
+    }
+
+    return (assetsCache = new Promise(async (resolve) => {
+      const clientJsImports: [string, string[]][] = [];
+      const pageClientCssImports: string[] = [];
+
+      for (const [inputPath, page] of pageMap) {
+        if (!Array.isArray(page)) {
+          clientJsImports.push([inputPath, page.clientJs]);
+          pageClientCssImports.push(...page.clientCss);
+        }
+      }
+
+      const [jsPaths, jsClientCssImports] = await bundleClientJs(
+        clientJsImports,
+        eleventyConfig.dir.output,
+      );
+
+      const cssPath = await bundleClientCss(
+        [...new Set([...jsClientCssImports, ...pageClientCssImports])],
+        eleventyConfig.dir.output,
+        sassPluginOptions
+      );
+      resolve({ jsPaths, cssPath });
+    }));
+  };
 
   eleventyConfig.on("eleventy.before", (event: EleventyEvent) => {
     runMode = event.runMode;
+    assetsCache = undefined;
   });
 
-  eleventyConfig.on(
-    "eleventy.after",
-    async ({ results, runMode, dir }: EleventyAfterEvent) => {
-      if (inline) {
-        for (const { inputPath, content, outputPath } of results) {
-          const page = pageMap.get(inputPath);
-          if (page && !Array.isArray(page)) {
-            await injectInline(content, inputPath, outputPath, page);
-          }
-        }
-      } else {
-        const clientJsImports: [string, string[]][] = [];
-        const pageClientCssImports: string[] = [];
-
-        for (const [inputPath, page] of pageMap) {
-          if (!Array.isArray(page)) {
-            clientJsImports.push([inputPath, page.clientJs]);
-            pageClientCssImports.push(...page.clientCss);
-          }
-        }
-
-        const [jsPaths, jsClientCssImports] = await bundleClientJs(
-          clientJsImports,
-          dir.output,
-        );
-
-        const cssPath = await bundleClientCss(
-          [...new Set([...jsClientCssImports, ...pageClientCssImports])],
-          dir.output,
-        );
-
-        for (const { inputPath, content, outputPath } of results) {
-          if (pageMap.has(inputPath)) {
-            await injectBundle(
-              content,
-              outputPath,
-              jsPaths[inputPath],
-              cssPath,
-            );
-          }
-        }
+  eleventyConfig.on("eleventy.after", ({ runMode }: EleventyAfterEvent) => {
+    if (runMode === "build") {
+      for (const [, ctx] of pageContexts) {
+        ctx.dispose();
       }
+    }
+  });
 
-      if (runMode === "build") {
-        for (const [, ctx] of pageContexts) {
-          ctx.dispose();
-        }
-      }
-    },
-  );
-
+  eleventyConfig.addTemplateFormats("jsx");
+  eleventyConfig.addTemplateFormats("tsx");
   eleventyConfig.addExtension(["jsx", "tsx"], {
     read: false,
     getData: true,
@@ -180,7 +179,9 @@ module.exports = function kdsPlugin(
 
       return (data: any) => {
         try {
-          return renderToStaticMarkup(component(data) as ReactElement);
+          const html = renderToStaticMarkup(component(data) as ReactElement);
+          inputPathByOutputPath[data.page.outputPath] = inputPath;
+          return html;
         } catch (error) {
           if (runMode === "serve") {
             console.error(error);
@@ -194,4 +195,23 @@ module.exports = function kdsPlugin(
       };
     },
   });
+
+  eleventyConfig.addTransform(
+    "jsx-inject-assets",
+    async function (content: string, outputPath: string) {
+      const inputPath = inputPathByOutputPath[outputPath];
+      const page = pageMap.get(inputPath);
+
+      if (!page || Array.isArray(page)) {
+        return content;
+      }
+
+      if (inline) {
+        return await injectInline(content, inputPath, page);
+      } else {
+        const { jsPaths, cssPath } = await getSiteAssets();
+        return await injectBundle(content, jsPaths[inputPath], cssPath);
+      }
+    },
+  );
 };

@@ -1,8 +1,5 @@
-import fs from "fs";
-
 export async function injectBundle(
   content: string,
-  outputPath: string,
   jsPath: { permalink: string; imports: string[] } | undefined,
   cssPath: string | undefined,
 ) {
@@ -28,7 +25,5 @@ export async function injectBundle(
     );
   }
 
-  if (newContent !== content) {
-    fs.writeFileSync(outputPath, newContent);
-  }
+  return newContent;
 }

@@ -1,4 +1,3 @@
-import fs from "fs";
 import esbuild from "esbuild";
 import { sassPlugin } from "esbuild-sass-plugin";
 import { esbuildTargets } from "./browserTargets";
@@ -36,7 +35,6 @@ async function bundleClientAssets(clientAssets: string[], inputPath: string) {
 export async function injectInline(
   content: string,
   inputPath: string,
-  outputPath: string,
   { clientCss, clientJs }: { clientCss: string[]; clientJs: string[] },
 ) {
   let newContent = content;
@@ -55,7 +53,5 @@ export async function injectInline(
     );
   }
 
-  if (newContent !== content) {
-    fs.writeFileSync(outputPath, newContent);
-  }
+  return newContent;
 }

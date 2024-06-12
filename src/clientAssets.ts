@@ -131,7 +131,7 @@ export async function bundleClientJs(
 export async function bundleClientCss(
   imports: string[],
   outdir: string,
-  sassPluginOptions?: SassPluginOptions
+  sassPluginOptions?: SassPluginOptions,
 ) {
   const result = await esbuild.build({
     stdin: {
