@@ -50,7 +50,7 @@ export function findClientAssets(
         ) {
           clientAssets.add(i.path);
         } else {
-          findClientAssets(i.path, inputs, clientAssets);
+          findClientAssets(i.path, inputs, clientAssets, visited);
         }
       }
     }
