@@ -63,24 +63,21 @@ export function bundlePage(
     inputPath.slice(2),
     result.metafile.inputs,
   );
-  const { clientJs, clientCss } = [...clientAssets].reduce(
-    (prev, curr) => {
-      switch (path.extname(curr)) {
-        case ".js":
-          prev.clientJs.push(curr);
-          break;
-        case ".css":
-        case ".scss":
-          prev.clientCss.push(curr);
-          break;
-      }
-      return prev;
-    },
-    {
-      clientJs: [],
-      clientCss: [],
-    } as { clientJs: string[]; clientCss: string[] },
-  );
+  const clientJs: string[] = [];
+  const clientCss: string[] = [];
+
+  for (const asset of clientAssets) {
+    switch (path.extname(asset)) {
+      case ".js":
+        clientJs.push(asset);
+        break;
+      case ".css":
+      case ".scss":
+        clientCss.push(asset);
+        break;
+    }
+  }
+
   return {
     component: page.component,
     data: page.data,

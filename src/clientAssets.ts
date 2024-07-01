@@ -36,18 +36,22 @@ export function findClientAssets(
   name: string,
   inputs: Metafile["inputs"],
   clientAssets = new Set<string>(),
+  visited = new Set<string>(),
 ) {
   if (inputs[name]?.imports.length) {
     for (const i of inputs[name].imports) {
-      if (
-        (i.path.endsWith(".js") &&
-          (i.path.endsWith(".client.js") || kds_exports.includes(i.path))) ||
-        i.path.endsWith(".css") ||
-        i.path.endsWith(".scss")
-      ) {
-        clientAssets.add(i.path);
-      } else {
-        findClientAssets(i.path, inputs, clientAssets);
+      if (!visited.has(i.path)) {
+        visited.add(i.path);
+        if (
+          (i.path.endsWith(".js") &&
+            (i.path.endsWith(".client.js") || kds_exports.includes(i.path))) ||
+          i.path.endsWith(".css") ||
+          i.path.endsWith(".scss")
+        ) {
+          clientAssets.add(i.path);
+        } else {
+          findClientAssets(i.path, inputs, clientAssets);
+        }
       }
     }
   }

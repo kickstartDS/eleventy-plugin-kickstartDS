@@ -97,7 +97,7 @@ module.exports = function kdsPlugin(
       const cssPath = await bundleClientCss(
         [...new Set([...jsClientCssImports, ...pageClientCssImports])],
         eleventyConfig.dir.output,
-        sassPluginOptions
+        sassPluginOptions,
       );
       resolve({ jsPaths, cssPath });
     }));
